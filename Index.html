@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive MSP 16x16 Matrix</title>
+  <style>
+    body {
+      background-color: #698dd2;
+      font-family: 'Avenir Next World', sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #000;
+      border: 15px solid transparent;
+    }
+    .button-container, .legend-container, .description {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #fff;
+    }
+    .button.active {
+      background-color: #2f6fa9;
+      color: white;
+    }
+    .filter-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      margin: 5px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      background-color: transparent;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .filter-button.active {
+      border-color: #fff;
+      background-color: #ffffff22;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .matrix {
+      display: none;
+      overflow-x: auto;
+    }
+    .matrix-table {
+      border-collapse: separate;
+      border-spacing: 4px;
+      margin: 0 auto;
+    }
+    .matrix-table td, .matrix-table th {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      vertical-align: middle;
+      border-radius: 6px;
+      padding: 4px;
+    }
+    .matrix-table th {
+      border: 1px solid white;
+      background-color: transparent;
+      color: white;
+      font-size: 11px;
+      padding: 6px;
+    }
+    .matrix-table td {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .description p {
+      color: white;
+      font-size: 15px;
+      max-width: 960px;
+      margin: 0 auto 1em;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="button-container">
+    <button class="button" id="btn-adr" onclick="showMatrix('adr')">Adriatic</button>
+    <button class="button" id="btn-tir" onclick="showMatrix('tir')">Tyrrhenian</button>
+    <button class="button" id="btn-ion" onclick="showMatrix('ion')">Ionian</button>
+  </div>
+
+  <div class="legend-container">
+    <button class="filter-button" data-color="green"><span class="legend-color" style="background-color: #42a44e;"></span> Synergy</button>
+    <button class="filter-button" data-color="red"><span class="legend-color" style="background-color: #bc5052;"></span> Conflict</button>
+    <button class="filter-button" data-color="yellow"><span class="legend-color" style="background-color: #f9cc5c;"></span> Coexistence / Potential conflict</button>
+  </div>
+
+  <div class="description">
+    <p><strong>Interaction matrix for each Maritime Area.</strong><br>
+    <span style="color:#bc5052">Red</span> = conflict experienced in the maritime area;<br>
+    <span style="color:#f9cc5c">Yellow</span> = conflict reported as possible/potential, or the concurrent presence of possible synergies and conflicts, or substantial coexistence among uses in the maritime area;<br>
+    <span style="color:#42a44e">Green</span> = synergy experienced in the maritime area.</p>
+  </div>
+
+  <div id="adr" class="matrix"></div>
+  <div id="tir" class="matrix"></div>
+  <div id="ion" class="matrix"></div>
+
+  <script>
+    const matrixSize = 16;
+    const labels = [
+      "Maritime transport and ports",
+      "Coastal and maritime tourism",
+      "Energy – hydrocarbon extraction",
+      "Energy – cables and pipelines",
+      "Aquaculture – shellfish farming",
+      "Aquaculture – finfish farming",
+      "Commercial fishing – trawl nets",
+      "Commercial fishing – fixed gear",
+      "Small-scale fishing",
+      "Military defence – temporary uses",
+      "Military defence – permanent uses",
+      "Extraction of relict sands",
+      "Protection of the environment and natural resources",
+      "Underwater cultural heritage",
+      "Energy – renewable energy",
+      "Scientific research and innovation"
+    ];
+
+    const data = {
+      adr: [["red", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "yellow", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "green", "red", "yellow", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "green", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "red", "red", "red", "yellow", "red", "red", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "yellow", "red", "red", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "yellow", "yellow", "red", "yellow", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "red", "red", "yellow", "yellow", "yellow", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "red", "red", "red", "red", "red", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "yellow", "red", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "", "", "", "", ""],
+        ["yellow", "green", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "yellow", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "red", "red", "red", "yellow", "yellow", "yellow", "red", "red", "green", "", "", ""],
+        ["yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "yellow", "yellow", "red", "yellow", "red", "yellow", "red", "", ""],
+        ["red", "green", "green", "yellow", "green", "green", "red", "yellow", "yellow", "yellow", "red", "yellow", "green", "green", "green", ""]],
+      tir: [["red", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "red", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "red", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "yellow", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "green", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "red", "red", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "yellow", "yellow", "red", "red", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "red", "red", "yellow", "yellow", "yellow", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "red", "red", "red", "red", "red", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "", "", "", "", ""],
+        ["yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "yellow", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "red", "red", "red", "yellow", "yellow", "yellow", "red", "red", "green", "", "", ""],
+        ["yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "yellow", "yellow", "red", "yellow", "red", "yellow", "red", "", ""],
+        ["red", "green", "green", "yellow", "green", "green", "red", "yellow", "yellow", "yellow", "red", "yellow", "green", "green", "green", ""]],
+      ion: [["red", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "red", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "yellow", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "green", "red", "yellow", "", "", "", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "green", "", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "red", "red", "red", "", "", "", "", "", "", "", "", ""],
+        ["red", "yellow", "red", "yellow", "yellow", "red", "", "", "", "", "", "", "", "", "", ""],
+        ["yellow", "green", "red", "yellow", "yellow", "yellow", "yellow", "yellow", "", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "red", "red", "yellow", "yellow", "yellow", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "red", "red", "red", "red", "red", "", "", "", "", "", "", ""],
+        ["yellow", "yellow", "red", "red", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "", "", "", "", ""],
+        ["yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "yellow", "", "", "", ""],
+        ["yellow", "yellow", "red", "yellow", "red", "red", "red", "yellow", "yellow", "yellow", "red", "red", "green", "", "", ""],
+        ["yellow", "yellow", "yellow", "yellow", "yellow", "yellow", "red", "yellow", "yellow", "red", "yellow", "red", "yellow", "red", "", ""],
+        ["red", "green", "green", "yellow", "green", "green", "red", "yellow", "yellow", "yellow", "red", "yellow", "green", "green", "green", ""]]
+    };
+
+    const colors = {
+      green: ['#d3f9d8', '#a6f4b6', '#42a44e'],
+      red: ['#f6b6b7', '#e87777', '#bc5052'],
+      yellow: ['#fff4c1', '#fcd768', '#f9cc5c']
+    };
+
+    function buildMatrix(id) {
+      const container = document.getElementById(id);
+      container.innerHTML = '';
+      const table = document.createElement('table');
+      table.className = 'matrix-table';
+      const thead = document.createElement('thead');
+      const trHead = document.createElement('tr');
+      trHead.appendChild(document.createElement('th'));
+      labels.forEach(label => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        trHead.appendChild(th);
+      });
+      thead.appendChild(trHead);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      for (let i = 0; i < matrixSize; i++) {
+        const row = document.createElement('tr');
+        const th = document.createElement('th');
+        th.textContent = labels[i];
+        row.appendChild(th);
+        for (let j = 0; j < matrixSize; j++) {
+          const cell = document.createElement('td');
+          cell.dataset.color = data[id][i][j];
+          cell.dataset.intensity = 2;
+          row.appendChild(cell);
+        }
+        tbody.appendChild(row);
+      }
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    function showMatrix(id) {
+      document.querySelectorAll('.matrix').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`btn-${id}`).classList.add('active');
+      buildMatrix(id);
+      document.getElementById(id).style.display = 'block';
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const activeColors = Array.from(document.querySelectorAll('.filter-button.active')).map(btn => btn.dataset.color);
+      document.querySelectorAll('.matrix').forEach(matrix => {
+        matrix.querySelectorAll('td').forEach(cell => {
+          const color = cell.dataset.color;
+          const level = parseInt(cell.dataset.intensity);
+          cell.style.backgroundColor = activeColors.includes(color) ? colors[color][level] : 'rgba(255,255,255,0.2)';
+        });
+      });
+    }
+
+    document.querySelectorAll('.filter-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+        applyFilters();
+      });
+    });
+
+    showMatrix('adr');
+    document.querySelectorAll('.filter-button').forEach(btn => btn.classList.add('active'));
+    applyFilters();
+  </script>
+</body>
+</html>
